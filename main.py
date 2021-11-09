@@ -1,105 +1,104 @@
 import pygame
+from classes.char import Player
+from classes.enemy import Enemy
+from classes.projectile import Projectile
+
 pygame.init()
 
 win = pygame.display.set_mode((500, 480))
 pygame.display.set_caption("First Game")
 
 clock = pygame.time.Clock()
-
-walkRight = [pygame.image.load('imgs/R1.png'),
-             pygame.image.load('imgs/R2.png'),
-             pygame.image.load('imgs/R3.png'),
-             pygame.image.load('imgs/R4.png'),
-             pygame.image.load('imgs/R5.png'),
-             pygame.image.load('imgs/R6.png'),
-             pygame.image.load('imgs/R7.png'),
-             pygame.image.load('imgs/R8.png'),
-             pygame.image.load('imgs/R9.png')]
-
-walkLeft = [pygame.image.load('imgs/L1.png'),
-            pygame.image.load('imgs/L2.png'),
-            pygame.image.load('imgs/L3.png'),
-            pygame.image.load('imgs/L4.png'),
-            pygame.image.load('imgs/L5.png'),
-            pygame.image.load('imgs/L6.png'),
-            pygame.image.load('imgs/L7.png'),
-            pygame.image.load('imgs/L8.png'),
-            pygame.image.load('imgs/L9.png')]
-
 bg = pygame.image.load('imgs/bg.jpg')
-char = pygame.image.load('imgs/standing.png')
 
 screenWidth = 500
-screenHeight = 500
-x = 10
-y = 400
-width = 64
-height = 64
-vel = 5
-
-isJump = False
-jumpCount = 10
-left = False
-Right = False
-walkCount = 0
+screenHeight = 480
 
 
 def redraw_game_window():
-    global walkCount
     win.blit(bg, (0, 0))
-    if walkCount + 1 >= 27:
-        walkCount = 0
-    if left:
-        win.blit(walkLeft[walkCount//3], (x, y))
-        walkCount += 1
-    elif right:
-        win.blit(walkRight[walkCount//3], (x, y))
-        walkCount += 1
-    else:
-        win.blit(char, (x, y))
-
+    man.draw(win)
+    goblin.draw(win)
+    for redraw_bullet in bullets:
+        redraw_bullet.draw(win)
     pygame.display.update()
 
 
 run = True
+man = Player(300, 410, 64, 64)
+goblin = Enemy(100, 410, 64, 64, 450)
+shootLoop = 0
+bullets = []
+
 while run:
     clock.tick(27)
+
+    if shootLoop > 0:
+        shootLoop += 1
+    if shootLoop > 3:
+        shootLoop = 0
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             run = False
 
+    for bullet in bullets:
+        if bullet.y - bullet.radius < goblin.hitbox[1] + goblin.hitbox[3]\
+                and bullet.y + bullet.radius > goblin.hitbox[1]:
+            if bullet.x + bullet.radius > goblin.hitbox[0]\
+                    and bullet.x - bullet.radius < goblin.hitbox[0] + goblin.hitbox[2]:
+                goblin.hit()
+                bullets.pop(bullets.index(bullet))
+
+        if 500 > bullet.x > 0:
+            bullet.x += bullet.vel
+        else:
+            bullets.pop(bullets.index(bullet))
+
     keys = pygame.key.get_pressed()
 
-    if keys[pygame.K_LEFT] and x > vel:
-        x -= vel
-        left = True
-        right = False
-    elif keys[pygame.K_RIGHT] and x < screenWidth - width - vel:
-        x += vel
-        right = True
-        left = False
-    else:
-        left = False
-        right = False
-        walkCount = 0
-
-    if not isJump:
-        if keys[pygame.K_SPACE]:
-            isJump = True
-            left = False
-            right = False
-            walkCount = 0
-    else:
-        if jumpCount >= -10:
-            neg = 1
-            if jumpCount < 0:
-                neg = -1
-            y -= (jumpCount ** 2) * 0.5 * neg * 0.5
-            jumpCount -= 1
+    if keys[pygame.K_SPACE] and shootLoop == 0:
+        if man.left:
+            facing = -1
         else:
-            isJump = False
-            jumpCount = 10
+            facing = 1
+        if len(bullets) < 5:
+            bullets.append(Projectile(x=round(man.x + man.width // 2),
+                                      y=round(man.y + man.height // 2),
+                                      radius=6,
+                                      color=(0, 0, 0),
+                                      facing=facing))
+        shootLoop = 1
+
+    if keys[pygame.K_LEFT] and man.x > man.vel:
+        man.x -= man.vel
+        man.left = True
+        man.right = False
+        man.standing = False
+    elif keys[pygame.K_RIGHT] and man.x < screenWidth - man.width - man.vel:
+        man.x += man.vel
+        man.right = True
+        man.left = False
+        man.standing = False
+    else:
+        man.standing = True
+        man.walkCount = 0
+
+    if not man.isJump:
+        if keys[pygame.K_UP]:
+            man.isJump = True
+            man.standing = True
+            man.walkCount = 0
+    else:
+        if man.jumpCount >= -10:
+            neg = 1
+            if man.jumpCount < 0:
+                neg = -1
+            man.y -= (man.jumpCount ** 2) * 0.5 * neg * 0.5
+            man.jumpCount -= 1
+        else:
+            man.isJump = False
+            man.jumpCount = 10
     redraw_game_window()
 
 pygame.quit()
