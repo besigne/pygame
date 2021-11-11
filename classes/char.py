@@ -56,4 +56,22 @@ class Player(object):
             else:
                 win.blit(self.walkLeft[0], (self.x, self.y))
         self.hitbox = (self.x + 17, self.y + 11, 29, 52)
-        pygame.draw.rect(win, (255, 0, 0), self.hitbox, 2)
+
+    def hit(self, win):
+        self.x = 60
+        self.y = 410
+        self.walkCount = 0
+        self.isJump = False
+        self.jumpCount = 10
+        font = pygame.font.SysFont('comicsans', 100)
+        text = font.render('-5', True, (255, 0, 0))
+        win.blit(text, (250 - (text.get_width()/2), 200))
+        pygame.display.update()
+        i = 0
+        while i < 50:
+            pygame.time.delay(10)
+            i += 1
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    i = 101
+                    pygame.quit()
