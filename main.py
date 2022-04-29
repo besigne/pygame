@@ -1,7 +1,5 @@
 import pygame
-from classes.char import Player
-from classes.enemy import Enemy
-from classes.projectile import Projectile
+from classes import Player, Enemy, Projectile
 
 pygame.init()
 
